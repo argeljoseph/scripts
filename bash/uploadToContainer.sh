@@ -10,11 +10,14 @@
 # Bash Functions
 # Get variables for script
 getVariables () {
-    if [ -f "$1" ]; then
-        source "$1"
-    else
-        echo "`date +%T` ERROR: File not found."
-    fi
+    requiredVariables=(SID dataBackupDir logBackupDir scriptDir stAccount blobSAS)
+    source "$1"
+    for var in "${requiredVariables[@]}"; do
+        if ! grep -q "^${var}=" "$1"; then
+            echo "`date +%T` ERROR: $var is not defined in $1."
+            exit 1
+        fi
+    done
 }
 
 execSync () {
@@ -32,30 +35,39 @@ printUsage () {
 }
 
 checkParameters () {
-    backupType=`echo "$1"| tr '[:upper:]' '[:lower:]'`
-    schedule=`echo "$2"| tr '[:upper:]' '[:lower:]'`
-    if [ $backupType = "data" ] || [ $backupType = "log" ]; then
-        if [ $schedule = "daily" ] || [ $schedule = "weekly" ] || [ $schedule = "monthly" ] || [ $schedule = "yearly" ]; then
-            return 0
+    backupType=$(toLower "$2")
+    schedule=$(toLower "$3")
+    if [ -f "$1" ]; then
+        if [ $backupType = "data" ] || [ $backupType = "log" ]; then
+            if [ $schedule = "daily" ] || [ $schedule = "weekly" ] || [ $schedule = "monthly" ] || [ $schedule = "yearly" ]; then
+                return 0
+            else
+                echo "`date +%T` ERROR: Invalid schedule. Valid options: daily, weekly, monthly, yearly"
+                return 1
+            fi
         else
-            echo "`date +%T` ERROR: Invalid schedule. Valid options: daily, weekly, monthly, yearly"
+            echo "`date +%T` ERROR: Invalid upload type. Use either log or data."
             return 1
         fi
     else
-        echo "`date +%T` ERROR: Invalid upload type. Use either log or data."
+        echo "`date +%T` ERROR: The file $1 does not exist."
         return 1
     fi
 }
 
 createBlobURL () {
-    blobURL=https://$stAccount.blob.core.windows.net/production/$2/$SID/$1
+    blobURL=https://$(toLower "$stAccount").blob.core.windows.net/production/$(toLower "$2")/$(toLower "$SID")/$(toLower "$1")
     echo "$blobURL"
+}
+
+toLower () {
+    echo "$1" | tr '[:upper:]' '[:lower:]'
 }
 
 # Main script
 if [ $# -ne 3 ]; then
     printUsage
-elif checkParameters "$2" "$3"; then
+elif checkParameters "$1" "$2" "$3"; then
     getVariables $1
     # Set script logs name
     logFile=${scriptDir}/logs/uploadToBlob_${SID}_`date +%Y%m%d%H%M%S`.log
