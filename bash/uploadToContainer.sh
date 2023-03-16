@@ -13,7 +13,7 @@ getVariables () {
     if [ -f "$1" ]; then
         source "$1"
     else
-        echo "File not found."
+        echo "`date +%T` ERROR: File not found."
     fi
 }
 
@@ -23,7 +23,7 @@ execSync () {
     if [ $? -eq 0 ]; then
         echo -e "`date +%T` INFO: Upload completed successfully." | tee -a $logFile
     else
-        echo -e "`date +%T` INFO: Upload failed." | tee -a $logFile
+        echo -e "`date +%T` ERROR: Upload failed." | tee -a $logFile
     fi
 }
 
@@ -38,11 +38,11 @@ checkParameters () {
         if [ $schedule = "daily" ] || [ $schedule = "weekly" ] || [ $schedule = "monthly" ] || [ $schedule = "yearly" ]; then
             return 0
         else
-            echo "`date +%T` INFO: Invalid schedule. Valid options: daily, weekly, monthly, yearly"
+            echo "`date +%T` ERROR: Invalid schedule. Valid options: daily, weekly, monthly, yearly"
             return 1
         fi
     else
-        echo "`date +%T` INFO: Invalid upload type. Use either log or data."
+        echo "`date +%T` ERROR: Invalid upload type. Use either log or data."
         return 1
     fi
 }
@@ -79,5 +79,5 @@ elif checkParameters "$2" "$3"; then
         fi
     fi
 else
-    echo "`date +%T` INFO: Invalid options provided."
+    echo "`date +%T` ERROR: Invalid options provided."
 fi
