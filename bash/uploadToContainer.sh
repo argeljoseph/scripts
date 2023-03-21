@@ -64,13 +64,23 @@ toLower () {
     echo "$1" | tr '[:upper:]' '[:lower:]'
 }
 
+cleanupScriptLogs () {
+    echo -e "`date +%T` INFO: Deleting script log files older than $1 days." | tee -a $logFile
+    deletedFiles=$(find ${scriptDir}/logs -name "*.log" -type f -mtime +$1 -print -delete)
+    if [ -n "$deletedFiles" ]; then
+        echo -e "`date +%T` INFO: The following files were deleted:\n$deletedFiles" | tee -a $logFile
+    else
+        echo -e "`date +%T` INFO: No files were deleted." | tee -a $logFile
+    fi
+}
+
 # Main script
 if [ $# -ne 3 ]; then
     printUsage
 elif checkParameters "$1" "$2" "$3"; then
     getVariables $1
     # Set script logs name
-    logFile=${scriptDir}/logs/uploadToBlob_${SID}_`date +%Y%m%d%H%M%S`.log
+    logFile=${scriptDir}/logs/uploadToContainer_${SID}_`date +%Y%m%d%H%M%S`.log
     echo "`date +%T` INFO: Setting variables from parameters file." | tee -a $logFile
     echo "`date +%T` INFO: SID is $SID." | tee -a $logFile
     echo "`date +%T` INFO: Data backups to be uploaded from $dataBackupDir." | tee -a $logFile
@@ -86,6 +96,7 @@ elif checkParameters "$1" "$2" "$3"; then
         # Running actual uploads from this block
         if [ $2 = "data" ]; then
             execSync $dataBackupDir $blobURL $blobSAS "data backups"
+            cleanupScriptLogs "30"
         else
             execSync $dataBackupDir $blobURL $blobSAS "log backups"
         fi
