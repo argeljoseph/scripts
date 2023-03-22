@@ -56,7 +56,7 @@ checkParameters () {
 }
 
 createBlobURL () {
-    blobURL=https://$(toLower "$stAccount").blob.core.windows.net/production/$(toLower "$2")/$(toLower "$SID")/$(toLower "$1")
+    blobURL=https://$(toLower "$stAccount").blob.core.windows.net/production/$(toLower "$2")/$SID/$(toLower "$1")
     echo "$blobURL"
 }
 
@@ -90,15 +90,16 @@ elif checkParameters "$1" "$2" "$3"; then
     echo "`date +%T` INFO: Script logs will be available at $logFile." | tee -a $logFile
     # Set variables for execution of sync URL:
     blobURL=$(createBlobURL $2 $3)
-    if [ "`whoami`" != "$sapUser" ]; then
-        echo -e "`date +%T` ERROR: Please run script as $sapUser." | tee -a $logFile
+    sapUser="${SID}adm"
+    if [ "$(toLower $(whoami))" != "$(toLower $sapUser)" ]; then
+    echo -e "`date +%T` ERROR: Please run script as $(toLower $sapUser)." | tee -a $logFile
     else
         # Running actual uploads from this block
         if [ $2 = "data" ]; then
             execSync $dataBackupDir $blobURL $blobSAS "data backups"
             cleanupScriptLogs "30"
         else
-            execSync $dataBackupDir $blobURL $blobSAS "log backups"
+            execSync $logBackupDir $blobURL $blobSAS "log backups"
         fi
     fi
 else
