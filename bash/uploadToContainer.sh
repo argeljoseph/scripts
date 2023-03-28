@@ -22,10 +22,12 @@ getVariables () {
 
 execSync () {
     echo "`date +%T` INFO: Uploading ${4} to $2." | tee -a $logFile
-    ${scriptDir}/azcopy sync "${1}" "${2}${3}" 2>> $logFile
+    output=$(${scriptDir}/azcopy sync "${1}" "${2}${3}" 2>&1)
     if [ $? -eq 0 ]; then
+        echo "$output" | tee -a $logFile
         echo -e "`date +%T` INFO: Upload completed successfully." | tee -a $logFile
     else
+        echo "$output" | tee -a $logFile
         echo -e "`date +%T` ERROR: Upload failed." | tee -a $logFile
     fi
 }
