@@ -66,9 +66,9 @@ toLower () {
     echo "$1" | tr '[:upper:]' '[:lower:]'
 }
 
-cleanupScriptLogs () {
-    echo -e "`date +%T` INFO: Deleting script log files older than $1 days." | tee -a $logFile
-    deletedFiles=$(find ${scriptDir}/logs -name "*.log" -type f -mtime +$1 -print -delete)
+cleanupFiles () {
+    echo -e "`date +%T` INFO: Deleting files older than $1 days in $2." | tee -a $logFile
+    deletedFiles=$(find $2 -type f -mtime +$1 -print -delete)
     if [ -n "$deletedFiles" ]; then
         echo -e "`date +%T` INFO: The following files were deleted:\n$deletedFiles" | tee -a $logFile
     else
@@ -99,9 +99,11 @@ elif checkParameters "$1" "$2" "$3"; then
         # Running actual uploads from this block
         if [ $2 = "data" ]; then
             execSync $dataBackupDir $blobURL $blobSAS "data backups"
-            cleanupScriptLogs "30"
+            cleanupFiles "30" $dataBackupDir
+            cleanupFiles "30" "${scriptDir}/logs"
         else
             execSync $logBackupDir $blobURL $blobSAS "log backups"
+            cleanupFiles "30" $logBackupDir
         fi
     fi
 else
