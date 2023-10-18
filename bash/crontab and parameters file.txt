@@ -1,0 +1,36 @@
+# HANA Cleaner script
+00 05 * * * /tmp/HANACleaner/HanaCleaner.sh >> /tmp/HANACleaner/Hanacleaner_joblog_$(date +\%Y\%m\%d).log 2>1
+
+# Run uploads every 2 hours
+#00 */2 * * * /usr/sap/<SID>/scripts/uploadToBlob.sh
+
+# Daily backup uploads for log and data
+# Executes log backup uploads to daily/<SID>/log folder in the production container of storage account <storage account>
+00 */2 * * * /usr/sap/<SID>/scripts/uploadToContainer.sh /usr/sap/<SID>/scripts/parameters.txt log daily 
+
+# Executes data backup uploads to daily/<SID>/data folder in the production container of storage account <storage account>
+00 03 * * * /usr/sap/<SID>/scripts/uploadToContainer.sh /usr/sap/<SID>/scripts/parameters.txt data daily
+
+# Weekly
+# Executes data backup uploads to weekly/<SID>/data folder in the production container of storage account <storage account>
+00 03 * * 6 /usr/sap/<SID>/scripts/uploadToContainer.sh /usr/sap/<SID>/scripts/parameters.txt data weekly
+
+# Monthly
+# Executes data backup uploads to monthly/<SID>/data folder in the production container of storage account <storage account>
+00 03 28 * * /usr/sap/<SID>/scripts/uploadToContainer.sh /usr/sap/<SID>/scripts/parameters.txt data monthly
+
+# Yearly
+# Executes data backup uploads to yearly/<SID>/data folder in the production container of storage account <storage account>
+00 03 01 01 * /usr/sap/<SID>/scripts/uploadToContainer.sh /usr/sap/<SID>/scripts/parameters.txt data yearly
+
+
+# Parameters File to create for uploading scripts
+SID=<SID>
+dataBackupDir=<data directory>
+logBackupDir=/usr/sap/<SID>/HDB00/backup/log
+scriptDir=/usr/sap/<SID>/scripts
+stAccount=<storage account>
+blobSAS="<SAS Token>"
+
+
+# Will only be used without backint
